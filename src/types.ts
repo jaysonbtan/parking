@@ -4,7 +4,6 @@ export interface Coordinates {
 }
 
 export interface ParkingMeter {
-  meter_id: string;
   service_status: string;
   mobile_payment_number: number;
   rate_9am_6pm: string;

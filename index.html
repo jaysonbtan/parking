@@ -73,9 +73,15 @@
 
         <section id="results-section" class="results-section hidden">
           <div class="results-header">
-            <button type="button" class="btn btn--ghost" id="back-btn">
-              ← New search
-            </button>
+            <div class="results-header__toolbar">
+              <button type="button" class="btn btn--ghost" id="back-btn">
+                ← New search
+              </button>
+              <select id="sort-select" class="sort-select" aria-label="Sort results">
+                <option value="closest" selected>Closest</option>
+                <option value="cheapest">Cheapest</option>
+              </select>
+            </div>
             <div class="results-header__meta">
               <p id="location-label" class="results-header__location"></p>
               <p id="results-count" class="results-header__count"></p>

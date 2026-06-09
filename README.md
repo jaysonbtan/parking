@@ -31,6 +31,10 @@ npm run preview
 
 Open http://localhost:4173/parking/ to preview the production build locally.
 
+## Street names
+
+Street names use [Nominatim](https://nominatim.org/) with [Photon](https://photon.komoot.io/) as fallback (OpenStreetMap data). They load automatically, top results first (~1 lookup/sec).
+
 ## Deploy
 
 Hosted at **https://jaysonbtan.github.io/parking/** via GitHub Pages. Pushes to `main` trigger the deploy workflow automatically.

@@ -51,7 +51,7 @@ export async function fetchParkingNear(
     const url =
       `${PARKING_API}?where=${where}` +
       `&limit=${PAGE_SIZE}&offset=${offset}` +
-      `&select=meter_id,service_status,mobile_payment_number,rate_9am_6pm,rate_6pm_10pm,sector,direction,geo_point_2d`;
+      `&select=service_status,mobile_payment_number,rate_9am_6pm,rate_6pm_10pm,geo_point_2d`;
 
     const res = await fetch(url);
     if (!res.ok) {

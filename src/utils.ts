@@ -43,20 +43,36 @@ export function currentSortRate(meter: ParkingMeter): number {
   return 0;
 }
 
-export function enrichAndSort(
+export type SortMode = "cheapest" | "closest";
+
+export function enrichMeters(
   meters: ParkingMeter[],
   origin: Coordinates
 ): ParkingMeterWithDistance[] {
-  return meters
-    .map((meter) => ({
-      ...meter,
-      distanceMeters: haversineDistance(origin, meter.geo_point_2d),
-      sortRate: currentSortRate(meter),
-    }))
-    .sort((a, b) => {
+  return meters.map((meter) => ({
+    ...meter,
+    distanceMeters: haversineDistance(origin, meter.geo_point_2d),
+    sortRate: currentSortRate(meter),
+  }));
+}
+
+export function sortMeters(
+  meters: ParkingMeterWithDistance[],
+  mode: SortMode
+): ParkingMeterWithDistance[] {
+  const sorted = [...meters];
+  if (mode === "closest") {
+    sorted.sort((a, b) => {
+      if (a.distanceMeters !== b.distanceMeters) return a.distanceMeters - b.distanceMeters;
+      return a.sortRate - b.sortRate;
+    });
+  } else {
+    sorted.sort((a, b) => {
       if (a.sortRate !== b.sortRate) return a.sortRate - b.sortRate;
       return a.distanceMeters - b.distanceMeters;
     });
+  }
+  return sorted;
 }
 
 export function formatDistance(meters: number): string {

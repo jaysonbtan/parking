@@ -204,6 +204,31 @@ body {
   padding: 0 1rem 0.75rem;
 }
 
+.results-header__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sort-select {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  padding: 0.4rem 1.75rem 0.4rem 0.625rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235c6b7a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
+  appearance: none;
+  cursor: pointer;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
 .results-header__location {
   margin: 0.25rem 0 0;
   font-weight: 600;
@@ -349,8 +374,12 @@ body {
   color: var(--color-text-muted);
 }
 
-.results-table__actions-spacer {
+.results-table__row-spacer {
   visibility: hidden;
+}
+
+.street-label--loading {
+  color: var(--color-border);
 }
 
 .icon-btn {
