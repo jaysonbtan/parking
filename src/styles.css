@@ -372,6 +372,11 @@ body {
   color: var(--color-text-muted);
 }
 
+.results-header__range {
+  font-weight: 700;
+  color: inherit;
+}
+
 /* Loading */
 
 .loading {
@@ -569,9 +574,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.15rem;
   white-space: nowrap;
   width: 100%;
+}
+
+.results-table__actions-row .map-btn {
+  margin-left: 8px;
 }
 
 .results-table__dist {
@@ -608,7 +616,14 @@ body {
   color: var(--color-primary);
 }
 
-.map-btn {
+.icon-btn.map-btn {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}
+
+.icon-btn.map-btn:hover,
+.icon-btn.map-btn:active {
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
   color: var(--color-primary);
 }
 

@@ -200,7 +200,8 @@ function formatResultsSummary(spots: ParkingMeterWithDistance[], view: RateView)
 
   if (!summary) return countLabel;
 
-  return `${countLabel}: ${formatRateAmount(summary.min)} to ${formatRateAmount(summary.max)} (Avg: ${formatRateAmount(summary.avg)})`;
+  const range = `${formatRateAmount(summary.min)} to ${formatRateAmount(summary.max)}`;
+  return `${countLabel}: <span class="results-header__range">${range}</span> (Avg: ${formatRateAmount(summary.avg)})`;
 }
 
 function renderTable(spots: ParkingMeterWithDistance[], locationText: string) {
@@ -250,7 +251,7 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string) {
   }
 
   locationLabel.textContent = `Near ${locationText}`;
-  resultsCount.textContent = formatResultsSummary(spots, rateView);
+  resultsCount.innerHTML = formatResultsSummary(spots, rateView);
   show(tableWrap);
   loadAllStreets(spots);
 }
