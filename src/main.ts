@@ -79,6 +79,7 @@ function coordKey(lat: number, lon: number): string {
 function applyStreetLabel(key: string, street: string) {
   resultsBody.querySelectorAll<HTMLElement>(`.street-label[data-coord-key="${key}"]`).forEach((el) => {
     el.textContent = street;
+    el.title = street;
     el.classList.remove("street-label--loading");
   });
 }
@@ -130,6 +131,7 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string, mo
         <span
           class="results-table__sub street-label${cachedStreet ? "" : " street-label--loading"}"
           data-coord-key="${key}"
+          ${cachedStreet ? `title="${cachedStreet}"` : ""}
         >${cachedStreet ?? "…"}</span>
       </td>
       <td class="results-table__rates">
