@@ -38,6 +38,9 @@ const sortSelect = document.getElementById("sort-select") as HTMLSelectElement;
 const rateSelect = document.getElementById("rate-select") as HTMLSelectElement;
 const rateHeader = document.getElementById("rate-header")!;
 const rateTabs = document.querySelectorAll<HTMLButtonElement>(".rate-tabs__btn");
+const toastEl = document.getElementById("toast")!;
+
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
 let cachedSpots: ParkingMeterWithDistance[] = [];
 let cachedLocationText = "";
@@ -95,7 +98,7 @@ function showSearchView() {
   hide(loadingEl);
 }
 
-const COPY_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const COPY_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
 const MAP_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
 
 
@@ -199,15 +202,15 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string, mo
     const row = document.createElement("tr");
     row.innerHTML = `
       <td class="results-table__pay">
-        <div class="results-table__pay-row">
-          <span class="results-table__code">${spot.mobile_payment_number}</span>
-          <button
-            type="button"
-            class="icon-btn copy-btn"
-            aria-label="Copy PayByPhone code ${spot.mobile_payment_number}"
-            data-code="${spot.mobile_payment_number}"
-          >${COPY_ICON}</button>
-        </div>
+        <button
+          type="button"
+          class="copy-group"
+          aria-label="Copy PayByPhone ID ${spot.mobile_payment_number}"
+          data-code="${spot.mobile_payment_number}"
+        >
+          <span class="copy-group__code">${spot.mobile_payment_number}</span>
+          <span class="copy-group__icon">${COPY_ICON}</span>
+        </button>
         <span
           class="results-table__sub street-label${cachedStreet ? "" : " street-label--loading"}"
           data-coord-key="${key}"
@@ -228,7 +231,6 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string, mo
             rel="noopener noreferrer"
           >${MAP_ICON}</a>
         </div>
-        <span class="results-table__sub results-table__row-spacer" aria-hidden="true">&nbsp;</span>
       </td>
     `;
     resultsBody.appendChild(row);
@@ -246,25 +248,27 @@ function refreshResults() {
   renderTable(sorted, cachedLocationText, mode);
 }
 
-async function copyToClipboard(code: string, btn: HTMLButtonElement) {
+function showToast(message: string) {
+  toastEl.textContent = message;
+  show(toastEl);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => hide(toastEl), 2000);
+}
+
+async function copyPayByPhone(code: string) {
   try {
     await navigator.clipboard.writeText(code);
-    btn.classList.add("icon-btn--success");
-    btn.setAttribute("aria-label", "Copied!");
-    setTimeout(() => {
-      btn.classList.remove("icon-btn--success");
-      btn.setAttribute("aria-label", `Copy PayByPhone code ${code}`);
-    }, 1500);
+    showToast("PayByPhone ID Copied");
   } catch {
-    btn.setAttribute("aria-label", "Copy failed");
+    showToast("Copy failed");
   }
 }
 
 resultsBody.addEventListener("click", (e) => {
-  const copyBtn = (e.target as HTMLElement).closest<HTMLButtonElement>(".copy-btn");
-  if (!copyBtn) return;
-  const code = copyBtn.dataset.code;
-  if (code) copyToClipboard(code, copyBtn);
+  const copyGroup = (e.target as HTMLElement).closest<HTMLButtonElement>(".copy-group");
+  if (!copyGroup) return;
+  const code = copyGroup.dataset.code;
+  if (code) void copyPayByPhone(code);
 });
 
 async function loadParking(
