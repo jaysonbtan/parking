@@ -1,12 +1,23 @@
+import { initAddressAutocomplete } from "./autocomplete";
 import { fetchParkingNear, geocodeAddress } from "./api";
 import { getCachedStreet, reverseGeocodeStreet } from "./nominatim";
 import type { Coordinates, ParkingMeterWithDistance } from "./types";
-import { enrichMeters, formatDistance, sortMeters, type SortMode } from "./utils";
+import {
+  averageRates,
+  enrichMeters,
+  formatDistance,
+  parseRate,
+  sortMeters,
+  type RateView,
+  type SortMode,
+} from "./utils";
 
 const searchSection = document.getElementById("search-section")!;
 const resultsSection = document.getElementById("results-section")!;
 const searchForm = document.getElementById("search-form") as HTMLFormElement;
 const addressInput = document.getElementById("address-input") as HTMLInputElement;
+const autocompleteList = document.getElementById("autocomplete-list") as HTMLUListElement;
+const addressAutocomplete = initAddressAutocomplete(addressInput, autocompleteList);
 const searchBtn = document.getElementById("search-btn") as HTMLButtonElement;
 const locationBtn = document.getElementById("location-btn") as HTMLButtonElement;
 const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
@@ -17,9 +28,13 @@ const errorEl = document.getElementById("error")!;
 const tableWrap = document.getElementById("results-table-wrap")!;
 const resultsBody = document.getElementById("results-body")!;
 const sortSelect = document.getElementById("sort-select") as HTMLSelectElement;
+const rateSelect = document.getElementById("rate-select") as HTMLSelectElement;
+const rateHeader = document.getElementById("rate-header")!;
+const rateTabs = document.querySelectorAll<HTMLButtonElement>(".rate-tabs__btn");
 
 let cachedSpots: ParkingMeterWithDistance[] = [];
 let cachedLocationText = "";
+let rateView: RateView = "day";
 
 function show(el: HTMLElement) {
   el.classList.remove("hidden");
@@ -109,8 +124,53 @@ async function loadAllStreets(spots: ParkingMeterWithDistance[]) {
   }
 }
 
+function rateClass(rate: string, average: number): string {
+  return parseRate(rate) < average ? " results-table__rate--below-avg" : "";
+}
+
+function rateHeaderLabel(view: RateView): string {
+  if (view === "day") return "Day Rate";
+  if (view === "evening") return "Evening Rate";
+  return "Rate";
+}
+
+function renderRateCell(
+  spot: ParkingMeterWithDistance,
+  avgDay: number,
+  avgNight: number,
+  view: RateView
+): string {
+  if (view === "day") {
+    return `<span class="results-table__rate-day${rateClass(spot.rate_9am_6pm, avgDay)}">${spot.rate_9am_6pm}</span>`;
+  }
+  if (view === "evening") {
+    return `<span class="results-table__rate-day${rateClass(spot.rate_6pm_10pm, avgNight)}">${spot.rate_6pm_10pm}</span>`;
+  }
+  return `
+    <span class="results-table__rate-day${rateClass(spot.rate_9am_6pm, avgDay)}">${spot.rate_9am_6pm}</span>
+    <span class="results-table__sub results-table__rate-night${rateClass(spot.rate_6pm_10pm, avgNight)}">${spot.rate_6pm_10pm}</span>
+  `;
+}
+
+function syncRateViewUI() {
+  rateSelect.value = rateView;
+  rateTabs.forEach((tab) => {
+    const isDayOrEvening = tab.dataset.rate === rateView;
+    tab.classList.toggle("rate-tabs__btn--active", isDayOrEvening);
+    tab.setAttribute("aria-selected", String(isDayOrEvening));
+  });
+}
+
+function setRateView(view: RateView) {
+  rateView = view;
+  syncRateViewUI();
+  if (cachedSpots.length > 0) refreshResults();
+}
+
 function renderTable(spots: ParkingMeterWithDistance[], locationText: string, mode: SortMode) {
   resultsBody.replaceChildren();
+  const { day: avgDay, night: avgNight } = averageRates(spots);
+  rateHeader.textContent = rateHeaderLabel(rateView);
 
   for (const spot of spots) {
     const { lat, lon } = spot.geo_point_2d;
@@ -135,8 +195,7 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string, mo
         >${cachedStreet ?? "…"}</span>
       </td>
       <td class="results-table__rates">
-        <span class="results-table__rate-day">${spot.rate_9am_6pm}</span>
-        <span class="results-table__sub">${spot.rate_6pm_10pm}</span>
+        ${renderRateCell(spot, avgDay, avgNight, rateView)}
       </td>
       <td class="results-table__actions">
         <div class="results-table__actions-row">
@@ -215,6 +274,8 @@ async function loadParking(
 
 searchForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+  addressAutocomplete.close();
+
   const query = addressInput.value.trim();
   if (!query) {
     addressInput.focus();
@@ -225,7 +286,15 @@ searchForm.addEventListener("submit", async (e) => {
   showResultsView();
 
   try {
-    const { lat, lon, label } = await geocodeAddress(query);
+    const picked = addressAutocomplete.getSelected();
+    const hasCoords =
+      picked &&
+      picked.label === query &&
+      Number.isFinite(picked.lat) &&
+      Number.isFinite(picked.lon);
+    const { lat, lon, label } = hasCoords
+      ? { lat: picked.lat, lon: picked.lon, label: picked.label }
+      : await geocodeAddress(picked?.label === query ? picked.label : query);
     setLoading(false);
     await loadParking({ lat, lon }, label);
   } catch (err) {
@@ -273,4 +342,15 @@ backBtn.addEventListener("click", () => {
 
 sortSelect.addEventListener("change", () => {
   if (cachedSpots.length > 0) refreshResults();
+});
+
+rateSelect.addEventListener("change", () => {
+  setRateView(rateSelect.value as RateView);
+});
+
+rateTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const view = tab.dataset.rate as RateView;
+    if (view === "day" || view === "evening") setRateView(view);
+  });
 });

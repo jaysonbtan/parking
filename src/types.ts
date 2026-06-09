@@ -3,6 +3,12 @@ export interface Coordinates {
   lon: number;
 }
 
+export interface AddressSuggestion {
+  label: string;
+  lat: number;
+  lon: number;
+}
+
 export interface ParkingMeter {
   service_status: string;
   mobile_payment_number: number;

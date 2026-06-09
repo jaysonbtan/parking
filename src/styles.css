@@ -81,6 +81,37 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.25rem;
+  overflow: visible;
+}
+
+.rate-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.25rem;
+  background: var(--color-bg);
+  border-radius: 10px;
+}
+
+.rate-tabs__btn {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, font-weight 0.15s;
+}
+
+.rate-tabs__btn--active {
+  font-weight: 600;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  box-shadow: 0 1px 4px rgba(26, 35, 50, 0.08);
 }
 
 .search-form__label {
@@ -95,6 +126,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+}
+
+.search-form__input-wrap {
+  position: relative;
+  min-width: 0;
 }
 
 .search-form__input {
@@ -113,6 +149,42 @@ body {
   outline: none;
   border-color: var(--color-primary);
   background: var(--color-surface);
+}
+
+.autocomplete {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin: 0;
+  padding: 0.35rem 0;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.autocomplete__item {
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.autocomplete__item--active,
+.autocomplete__item:hover {
+  background: #e8f4f4;
+  color: var(--color-primary);
+}
+
+.autocomplete__item--loading {
+  color: var(--color-text-muted);
+  cursor: default;
+  pointer-events: none;
 }
 
 .search-form__divider {
@@ -209,6 +281,12 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.results-header__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .sort-select {
@@ -402,6 +480,11 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.results-table__rate--below-avg {
+  color: #15803d;
+  font-weight: 700;
+}
+
 .results-table__actions-row {
   display: flex;
   align-items: center;
@@ -488,7 +571,7 @@ body {
     align-items: stretch;
   }
 
-  .search-form__input {
+  .search-form__input-wrap {
     flex: 1;
   }
 

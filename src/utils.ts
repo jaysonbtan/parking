@@ -44,6 +44,7 @@ export function currentSortRate(meter: ParkingMeter): number {
 }
 
 export type SortMode = "cheapest" | "closest";
+export type RateView = "day" | "evening" | "all";
 
 export function enrichMeters(
   meters: ParkingMeter[],
@@ -78,4 +79,18 @@ export function sortMeters(
 export function formatDistance(meters: number): string {
   if (meters < 1000) return `${Math.round(meters)} m`;
   return `${(meters / 1000).toFixed(1)} km`;
+}
+
+function finiteRates(rates: number[]): number[] {
+  return rates.filter((r) => Number.isFinite(r));
+}
+
+export function averageRates(spots: ParkingMeter[]): { day: number; night: number } {
+  const dayRates = finiteRates(spots.map((s) => parseRate(s.rate_9am_6pm)));
+  const nightRates = finiteRates(spots.map((s) => parseRate(s.rate_6pm_10pm)));
+
+  return {
+    day: dayRates.length ? dayRates.reduce((sum, r) => sum + r, 0) / dayRates.length : 0,
+    night: nightRates.length ? nightRates.reduce((sum, r) => sum + r, 0) / nightRates.length : 0,
+  };
 }

@@ -28,18 +28,51 @@
 
       <main class="main">
         <section id="search-section" class="search-section">
+          <div class="rate-tabs" role="tablist" aria-label="Rate type">
+            <button
+              type="button"
+              role="tab"
+              class="rate-tabs__btn rate-tabs__btn--active"
+              data-rate="day"
+              aria-selected="true"
+            >
+              Day Rate
+            </button>
+            <button
+              type="button"
+              role="tab"
+              class="rate-tabs__btn"
+              data-rate="evening"
+              aria-selected="false"
+            >
+              Evening Rate
+            </button>
+          </div>
+
           <form id="search-form" class="search-form">
             <label class="search-form__label" for="address-input">
               Address or intersection
             </label>
             <div class="search-form__row">
-              <input
-                id="address-input"
-                class="search-form__input"
-                type="text"
-                placeholder="e.g. Granville &amp; Robson"
-                autocomplete="street-address"
-              />
+              <div class="search-form__input-wrap">
+                <input
+                  id="address-input"
+                  class="search-form__input"
+                  type="text"
+                  placeholder="e.g. Granville &amp; Robson"
+                  autocomplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded="false"
+                  aria-controls="autocomplete-list"
+                />
+                <ul
+                  id="autocomplete-list"
+                  class="autocomplete hidden"
+                  role="listbox"
+                  aria-label="Address suggestions"
+                ></ul>
+              </div>
               <button type="submit" class="btn btn--primary" id="search-btn">
                 Search
               </button>
@@ -77,10 +110,17 @@
               <button type="button" class="btn btn--ghost" id="back-btn">
                 ← New search
               </button>
-              <select id="sort-select" class="sort-select" aria-label="Sort results">
-                <option value="closest" selected>Closest</option>
-                <option value="cheapest">Cheapest</option>
-              </select>
+              <div class="results-header__controls">
+                <select id="rate-select" class="sort-select" aria-label="Rate display">
+                  <option value="day" selected>Day Rate</option>
+                  <option value="evening">Evening Rate</option>
+                  <option value="all">All Rates</option>
+                </select>
+                <select id="sort-select" class="sort-select" aria-label="Sort results">
+                  <option value="closest" selected>Closest</option>
+                  <option value="cheapest">Cheapest</option>
+                </select>
+              </div>
             </div>
             <div class="results-header__meta">
               <p id="location-label" class="results-header__location"></p>
@@ -105,7 +145,7 @@
               <thead>
                 <tr>
                   <th scope="col">PayByPhone</th>
-                  <th scope="col">Rate</th>
+                  <th scope="col" id="rate-header">Day Rate</th>
                   <th scope="col">Dist.</th>
                 </tr>
               </thead>
