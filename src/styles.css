@@ -464,7 +464,12 @@ body {
 }
 
 .results-table th {
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  background-image: linear-gradient(
+    to bottom,
+    transparent calc(100% - 1px),
+    var(--color-border) calc(100% - 1px)
+  );
   color: var(--color-text-muted);
   font-weight: 600;
   font-size: 0.75rem;
@@ -472,7 +477,7 @@ body {
   letter-spacing: 0.04em;
   padding: 0.625rem 0.75rem;
   text-align: left;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: none;
   white-space: nowrap;
 }
 
@@ -486,9 +491,17 @@ body {
 
 .results-table td {
   padding: 0.75rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: none;
   vertical-align: middle;
   overflow: hidden;
+}
+
+.results-table tbody tr:not(:last-child) {
+  background-image: linear-gradient(
+    to bottom,
+    transparent calc(100% - 1px),
+    var(--color-border) calc(100% - 1px)
+  );
 }
 
 .results-table__pay {
@@ -505,12 +518,8 @@ body {
   text-align: right;
 }
 
-.results-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
 .results-table tbody tr:active {
-  background: #e8f4f4;
+  background-color: #e8f4f4;
 }
 
 .copy-group {
