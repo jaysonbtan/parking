@@ -81,6 +81,71 @@ export function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
+export interface AccuratePosition extends Coordinates {
+  accuracyMeters: number;
+}
+
+const TARGET_ACCURACY_M = 35;
+const MAX_LOCATION_WAIT_MS = 25_000;
+
+function toAccuratePosition(pos: GeolocationPosition): AccuratePosition {
+  return {
+    lat: pos.coords.latitude,
+    lon: pos.coords.longitude,
+    accuracyMeters: pos.coords.accuracy,
+  };
+}
+
+export function formatLocationLabel(accuracyMeters: number): string {
+  if (accuracyMeters <= 20) return "your current location";
+  return `your current location (±${Math.round(accuracyMeters)} m)`;
+}
+
+export function getAccuratePosition(
+  onProgress?: (accuracyMeters: number) => void
+): Promise<AccuratePosition> {
+  return new Promise((resolve, reject) => {
+    let best: GeolocationPosition | null = null;
+    let settled = false;
+    let watchId = 0;
+
+    const finish = (action: () => void) => {
+      if (settled) return;
+      settled = true;
+      navigator.geolocation.clearWatch(watchId);
+      clearTimeout(timer);
+      action();
+    };
+
+    const timer = setTimeout(() => {
+      finish(() => {
+        if (best) resolve(toAccuratePosition(best));
+        else reject(Object.assign(new Error("Location request timed out"), { code: 3 }));
+      });
+    }, MAX_LOCATION_WAIT_MS);
+
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (!best || pos.coords.accuracy < best.coords.accuracy) {
+          best = pos;
+        }
+        onProgress?.(pos.coords.accuracy);
+
+        if (pos.coords.accuracy <= TARGET_ACCURACY_M) {
+          finish(() => resolve(toAccuratePosition(pos)));
+        }
+      },
+      (err) => {
+        finish(() => {
+          if (best) resolve(toAccuratePosition(best));
+          else reject(err);
+        });
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_LOCATION_WAIT_MS }
+    );
+  });
+}
+
 function finiteRates(rates: number[]): number[] {
   return rates.filter((r) => Number.isFinite(r));
 }

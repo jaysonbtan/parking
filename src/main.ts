@@ -6,6 +6,8 @@ import {
   averageRates,
   enrichMeters,
   formatDistance,
+  formatLocationLabel,
+  getAccuratePosition,
   parseRate,
   sortMeters,
   type RateView,
@@ -24,6 +26,7 @@ const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
 const locationLabel = document.getElementById("location-label")!;
 const resultsCount = document.getElementById("results-count")!;
 const loadingEl = document.getElementById("loading")!;
+const loadingText = loadingEl.querySelector(".loading__text")!;
 const errorEl = document.getElementById("error")!;
 const tableWrap = document.getElementById("results-table-wrap")!;
 const resultsBody = document.getElementById("results-body")!;
@@ -303,7 +306,7 @@ searchForm.addEventListener("submit", async (e) => {
   }
 });
 
-locationBtn.addEventListener("click", () => {
+locationBtn.addEventListener("click", async () => {
   if (!navigator.geolocation) {
     showResultsView();
     showError("Your browser does not support location sharing.");
@@ -312,27 +315,26 @@ locationBtn.addEventListener("click", () => {
 
   setLoading(true);
   showResultsView();
+  loadingText.textContent = "Getting precise location…";
 
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const coords = {
-        lat: pos.coords.latitude,
-        lon: pos.coords.longitude,
-      };
-      setLoading(false);
-      await loadParking(coords, "your current location");
-    },
-    (err) => {
-      setLoading(false);
-      const messages: Record<number, string> = {
-        1: "Location permission denied. Allow location access or enter an address instead.",
-        2: "Could not determine your location. Try again or enter an address.",
-        3: "Location request timed out. Try again or enter an address.",
-      };
-      showError(messages[err.code] ?? "Could not get your location.");
-    },
-    { enableHighAccuracy: true, timeout: 15_000, maximumAge: 60_000 }
-  );
+  try {
+    const { lat, lon, accuracyMeters } = await getAccuratePosition((accuracy) => {
+      loadingText.textContent = `Getting precise location… (±${Math.round(accuracy)} m)`;
+    });
+    setLoading(false);
+    loadingText.textContent = "Finding parking spots…";
+    await loadParking({ lat, lon }, formatLocationLabel(accuracyMeters));
+  } catch (err) {
+    setLoading(false);
+    loadingText.textContent = "Finding parking spots…";
+    const code = (err as GeolocationPositionError).code;
+    const messages: Record<number, string> = {
+      1: "Location permission denied. Allow location access or enter an address instead.",
+      2: "Could not determine your location. Try again or enter an address.",
+      3: "Location request timed out. Try again or enter an address.",
+    };
+    showError(messages[code] ?? "Could not get your location.");
+  }
 });
 
 backBtn.addEventListener("click", () => {
