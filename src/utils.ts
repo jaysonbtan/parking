@@ -77,8 +77,9 @@ export function sortMeters(
 }
 
 export function formatDistance(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters)}m`;
-  return `${(meters / 1000).toFixed(1)}km`;
+  const unitGap = "\u200B";
+  if (meters < 1000) return `${Math.round(meters)}${unitGap}m`;
+  return `${(meters / 1000).toFixed(1)}${unitGap}km`;
 }
 
 export interface AccuratePosition extends Coordinates {

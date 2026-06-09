@@ -109,7 +109,7 @@ function mapsUrl(lat: number, lon: number): string {
   return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
 }
 
-const LOADING_STREET_LABEL = "Loading Street...";
+const LOADING_STREET_LABEL = "Resolving…";
 
 function coordKey(lat: number, lon: number): string {
   return `${lat},${lon}`;
@@ -136,16 +136,34 @@ async function loadAllStreets(spots: ParkingMeterWithDistance[]) {
     }
   }
 
-  for (const key of keyOrder) {
+  const concurrency = 6;
+  let nextIndex = 0;
+
+  async function resolveKey(key: string) {
     const coords = unique.get(key)!;
     const cached = getCachedStreet(coords);
     if (cached) {
       applyStreetLabel(key, cached);
-      continue;
+      return;
     }
-    const street = await reverseGeocodeStreet(coords);
-    applyStreetLabel(key, street);
+
+    try {
+      const street = await reverseGeocodeStreet(coords);
+      applyStreetLabel(key, street);
+    } catch {
+      applyStreetLabel(key, "Unknown street");
+    }
   }
+
+  async function worker() {
+    while (nextIndex < keyOrder.length) {
+      const key = keyOrder[nextIndex++];
+      await resolveKey(key);
+    }
+  }
+
+  const workers = Math.min(concurrency, keyOrder.length);
+  await Promise.all(Array.from({ length: workers }, () => worker()));
 }
 
 function rateClass(rate: string, average: number): string {
@@ -228,6 +246,8 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string) {
         <span
           class="results-table__sub street-label${cachedStreet ? "" : " street-label--loading"}"
           data-coord-key="${key}"
+          x-apple-data-detectors="false"
+          translate="no"
           ${cachedStreet ? `title="${cachedStreet}"` : ""}
         >${cachedStreet ?? LOADING_STREET_LABEL}</span>
       </td>
@@ -236,7 +256,7 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string) {
       </td>
       <td class="results-table__actions">
         <div class="results-table__actions-row">
-          <span class="results-table__dist">${formatDistance(spot.distanceMeters)}</span>
+          <span class="results-table__dist" x-apple-data-detectors="false" translate="no">${formatDistance(spot.distanceMeters)}</span>
           <a
             href="${mapsUrl(lat, lon)}"
             class="icon-btn map-btn"

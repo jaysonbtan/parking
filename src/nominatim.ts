@@ -99,20 +99,24 @@ async function rateLimitedNominatimFetch(url: string): Promise<Response> {
 }
 
 async function fetchNominatimStreet(coords: Coordinates): Promise<string | null> {
-  const params = new URLSearchParams({
-    lat: String(coords.lat),
-    lon: String(coords.lon),
-    format: "json",
-    addressdetails: "1",
-    zoom: "18",
-    email: NOMINATIM_EMAIL,
-  });
+  try {
+    const params = new URLSearchParams({
+      lat: String(coords.lat),
+      lon: String(coords.lon),
+      format: "json",
+      addressdetails: "1",
+      zoom: "18",
+      email: NOMINATIM_EMAIL,
+    });
 
-  const res = await rateLimitedNominatimFetch(`${NOMINATIM_REVERSE}?${params}`);
-  if (!res.ok) return null;
+    const res = await rateLimitedNominatimFetch(`${NOMINATIM_REVERSE}?${params}`);
+    if (!res.ok) return null;
 
-  const data = await res.json();
-  return formatNominatim(data);
+    const data = await res.json();
+    return formatNominatim(data);
+  } catch {
+    return null;
+  }
 }
 
 async function fetchPhotonStreet(coords: Coordinates): Promise<string | null> {
@@ -147,11 +151,12 @@ async function fetchPhotonStreet(coords: Coordinates): Promise<string | null> {
 
 async function resolveStreet(coords: Coordinates): Promise<string> {
   const normalized = normalizeCoords(coords);
-  const nominatim = await fetchNominatimStreet(normalized);
-  if (nominatim) return nominatim;
 
   const photon = await fetchPhotonStreet(normalized);
   if (photon) return photon;
+
+  const nominatim = await fetchNominatimStreet(normalized);
+  if (nominatim) return nominatim;
 
   return "Unknown street";
 }
@@ -165,6 +170,7 @@ export async function reverseGeocodeStreet(coords: Coordinates): Promise<string>
   if (pending) return pending;
 
   const promise = resolveStreet(coords)
+    .catch(() => "Unknown street")
     .then((street) => {
       if (street !== "Unknown street") {
         streetCache.set(key, street);
