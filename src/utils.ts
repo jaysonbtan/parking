@@ -101,23 +101,32 @@ export function formatLocationLabel(accuracyMeters: number): string {
   return `your current location (±${Math.round(accuracyMeters)} m)`;
 }
 
-export function getAccuratePosition(
-  onProgress?: (accuracyMeters: number) => void
-): Promise<AccuratePosition> {
-  return new Promise((resolve, reject) => {
-    let best: GeolocationPosition | null = null;
-    let settled = false;
-    let watchId = 0;
+export class LocationCancelledError extends Error {
+  readonly code = "cancelled";
+}
 
-    const finish = (action: () => void) => {
-      if (settled) return;
-      settled = true;
-      navigator.geolocation.clearWatch(watchId);
-      clearTimeout(timer);
-      action();
-    };
+export function startAccuratePosition(): {
+  promise: Promise<AccuratePosition>;
+  cancel: () => void;
+} {
+  let best: GeolocationPosition | null = null;
+  let settled = false;
+  let watchId = 0;
+  let timer = 0;
+  let rejectPromise: (reason: unknown) => void = () => {};
 
-    const timer = setTimeout(() => {
+  const finish = (action: () => void) => {
+    if (settled) return;
+    settled = true;
+    navigator.geolocation.clearWatch(watchId);
+    clearTimeout(timer);
+    action();
+  };
+
+  const promise = new Promise<AccuratePosition>((resolve, reject) => {
+    rejectPromise = reject;
+
+    timer = window.setTimeout(() => {
       finish(() => {
         if (best) resolve(toAccuratePosition(best));
         else reject(Object.assign(new Error("Location request timed out"), { code: 3 }));
@@ -129,7 +138,6 @@ export function getAccuratePosition(
         if (!best || pos.coords.accuracy < best.coords.accuracy) {
           best = pos;
         }
-        onProgress?.(pos.coords.accuracy);
 
         if (pos.coords.accuracy <= TARGET_ACCURACY_M) {
           finish(() => resolve(toAccuratePosition(pos)));
@@ -144,6 +152,11 @@ export function getAccuratePosition(
       { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_LOCATION_WAIT_MS }
     );
   });
+
+  return {
+    promise,
+    cancel: () => finish(() => rejectPromise(new LocationCancelledError())),
+  };
 }
 
 function finiteRates(rates: number[]): number[] {

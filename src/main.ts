@@ -7,7 +7,8 @@ import {
   enrichMeters,
   formatDistance,
   formatLocationLabel,
-  getAccuratePosition,
+  LocationCancelledError,
+  startAccuratePosition,
   parseRate,
   sortMeters,
   type RateView,
@@ -27,6 +28,9 @@ const locationLabel = document.getElementById("location-label")!;
 const resultsCount = document.getElementById("results-count")!;
 const loadingEl = document.getElementById("loading")!;
 const loadingText = loadingEl.querySelector(".loading__text")!;
+const locationCancelBtn = document.getElementById("location-cancel-btn") as HTMLButtonElement;
+
+let cancelLocation: (() => void) | null = null;
 const errorEl = document.getElementById("error")!;
 const tableWrap = document.getElementById("results-table-wrap")!;
 const resultsBody = document.getElementById("results-body")!;
@@ -56,7 +60,20 @@ function setLoading(active: boolean) {
     hide(tableWrap);
   } else {
     hide(loadingEl);
+    hide(locationCancelBtn);
+    loadingText.textContent = "Finding parking spots…";
   }
+}
+
+function setLocationLoading(active: boolean) {
+  if (active) {
+    loadingText.textContent = "Pinpointing your location";
+    show(locationCancelBtn);
+  } else {
+    hide(locationCancelBtn);
+    loadingText.textContent = "Finding parking spots…";
+  }
+  setLoading(active);
 }
 
 function showError(message: string) {
@@ -313,20 +330,28 @@ locationBtn.addEventListener("click", async () => {
     return;
   }
 
-  setLoading(true);
   showResultsView();
-  loadingText.textContent = "Getting precise location…";
+  setLocationLoading(true);
+
+  const { promise, cancel } = startAccuratePosition();
+  cancelLocation = cancel;
 
   try {
-    const { lat, lon, accuracyMeters } = await getAccuratePosition((accuracy) => {
-      loadingText.textContent = `Getting precise location… (±${Math.round(accuracy)} m)`;
-    });
-    setLoading(false);
-    loadingText.textContent = "Finding parking spots…";
+    const { lat, lon, accuracyMeters } = await promise;
+    cancelLocation = null;
+    setLocationLoading(false);
+    setLoading(true);
     await loadParking({ lat, lon }, formatLocationLabel(accuracyMeters));
   } catch (err) {
-    setLoading(false);
-    loadingText.textContent = "Finding parking spots…";
+    cancelLocation = null;
+    setLocationLoading(false);
+
+    if (err instanceof LocationCancelledError) {
+      showSearchView();
+      return;
+    }
+
+    showResultsView();
     const code = (err as GeolocationPositionError).code;
     const messages: Record<number, string> = {
       1: "Location permission denied. Allow location access or enter an address instead.",
@@ -335,6 +360,11 @@ locationBtn.addEventListener("click", async () => {
     };
     showError(messages[code] ?? "Could not get your location.");
   }
+});
+
+locationCancelBtn.addEventListener("click", () => {
+  cancelLocation?.();
+  cancelLocation = null;
 });
 
 backBtn.addEventListener("click", () => {

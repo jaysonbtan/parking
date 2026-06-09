@@ -350,6 +350,10 @@ body {
   font-size: 0.95rem;
 }
 
+.loading__cancel {
+  min-width: 7rem;
+}
+
 /* Error */
 
 .error {
