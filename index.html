@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Find the cheapest metered street parking near you in Vancouver, BC."
+    />
+    <title>Vancouver Parking Finder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="header">
+        <h1 class="header__title">Vancouver Parking</h1>
+        <p class="header__subtitle">Find the cheapest spots near you</p>
+      </header>
+
+      <main class="main">
+        <section id="search-section" class="search-section">
+          <form id="search-form" class="search-form">
+            <label class="search-form__label" for="address-input">
+              Address or intersection
+            </label>
+            <div class="search-form__row">
+              <input
+                id="address-input"
+                class="search-form__input"
+                type="text"
+                placeholder="e.g. Granville &amp; Robson"
+                autocomplete="street-address"
+              />
+              <button type="submit" class="btn btn--primary" id="search-btn">
+                Search
+              </button>
+            </div>
+          </form>
+
+          <div class="search-form__divider">
+            <span>or</span>
+          </div>
+
+          <button type="button" class="btn btn--secondary btn--full" id="location-btn">
+            <svg
+              class="btn__icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+              <path d="m4.93 4.93 1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+            </svg>
+            Share my location
+          </button>
+        </section>
+
+        <section id="results-section" class="results-section hidden">
+          <div class="results-header">
+            <button type="button" class="btn btn--ghost" id="back-btn">
+              ← New search
+            </button>
+            <div class="results-header__meta">
+              <p id="location-label" class="results-header__location"></p>
+              <p id="results-count" class="results-header__count"></p>
+            </div>
+          </div>
+
+          <div id="loading" class="loading hidden">
+            <div class="loading__spinner" aria-hidden="true"></div>
+            <p class="loading__text">Finding parking spots…</p>
+          </div>
+
+          <div id="error" class="error hidden" role="alert"></div>
+
+          <div id="results-table-wrap" class="results-table-wrap hidden">
+            <table class="results-table" id="results-table">
+              <thead>
+                <tr>
+                  <th scope="col">PayByPhone</th>
+                  <th scope="col">Rate</th>
+                  <th scope="col">Dist.</th>
+                </tr>
+              </thead>
+              <tbody id="results-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>
+          Data:
+          <a
+            href="https://opendata.vancouver.ca/explore/dataset/parking-meters/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >City of Vancouver Open Data</a
+          >
+          · CC-BY 4.0
+        </p>
+        <p class="footer__note">Unofficial — not affiliated with the City of Vancouver.</p>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
