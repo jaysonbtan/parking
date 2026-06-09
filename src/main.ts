@@ -1,5 +1,5 @@
 import { initAddressAutocomplete } from "./autocomplete";
-import { fetchParkingNear, geocodeAddress } from "./api";
+import { fetchParkingNear, resolveSearchQuery } from "./api";
 import { getCachedStreet, reverseGeocodeStreet } from "./nominatim";
 import type { Coordinates, ParkingMeterWithDistance } from "./types";
 import {
@@ -7,9 +7,11 @@ import {
   enrichMeters,
   formatDistance,
   formatLocationLabel,
+  formatRateAmount,
   LocationCancelledError,
   startAccuratePosition,
   parseRate,
+  rateSummary,
   sortMeters,
   type RateView,
   type SortMode,
@@ -37,6 +39,7 @@ const resultsBody = document.getElementById("results-body")!;
 const sortSelect = document.getElementById("sort-select") as HTMLSelectElement;
 const rateSelect = document.getElementById("rate-select") as HTMLSelectElement;
 const rateHeader = document.getElementById("rate-header")!;
+const rateTabsEl = document.querySelector(".rate-tabs")!;
 const rateTabs = document.querySelectorAll<HTMLButtonElement>(".rate-tabs__btn");
 const toastEl = document.getElementById("toast")!;
 
@@ -106,9 +109,7 @@ function mapsUrl(lat: number, lon: number): string {
   return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
 }
 
-function sortLabel(mode: SortMode): string {
-  return mode === "closest" ? "distance" : "current rate";
-}
+const LOADING_STREET_LABEL = "Loading Street...";
 
 function coordKey(lat: number, lon: number): string {
   return `${lat},${lon}`;
@@ -177,6 +178,7 @@ function renderRateCell(
 
 function syncRateViewUI() {
   rateSelect.value = rateView;
+  rateTabsEl.classList.toggle("rate-tabs--evening", rateView === "evening");
   rateTabs.forEach((tab) => {
     const isDayOrEvening = tab.dataset.rate === rateView;
     tab.classList.toggle("rate-tabs__btn--active", isDayOrEvening);
@@ -184,13 +186,24 @@ function syncRateViewUI() {
   });
 }
 
+syncRateViewUI();
+
 function setRateView(view: RateView) {
   rateView = view;
   syncRateViewUI();
   if (cachedSpots.length > 0) refreshResults();
 }
 
-function renderTable(spots: ParkingMeterWithDistance[], locationText: string, mode: SortMode) {
+function formatResultsSummary(spots: ParkingMeterWithDistance[], view: RateView): string {
+  const countLabel = `${spots.length} spot${spots.length === 1 ? "" : "s"}`;
+  const summary = rateSummary(spots, view);
+
+  if (!summary) return countLabel;
+
+  return `${countLabel}: ${formatRateAmount(summary.min)} to ${formatRateAmount(summary.max)} (Avg: ${formatRateAmount(summary.avg)})`;
+}
+
+function renderTable(spots: ParkingMeterWithDistance[], locationText: string) {
   resultsBody.replaceChildren();
   const { day: avgDay, night: avgNight } = averageRates(spots);
   rateHeader.textContent = rateHeaderLabel(rateView);
@@ -215,7 +228,7 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string, mo
           class="results-table__sub street-label${cachedStreet ? "" : " street-label--loading"}"
           data-coord-key="${key}"
           ${cachedStreet ? `title="${cachedStreet}"` : ""}
-        >${cachedStreet ?? "…"}</span>
+        >${cachedStreet ?? LOADING_STREET_LABEL}</span>
       </td>
       <td class="results-table__rates">
         ${renderRateCell(spot, avgDay, avgNight, rateView)}
@@ -237,7 +250,7 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string, mo
   }
 
   locationLabel.textContent = `Near ${locationText}`;
-  resultsCount.textContent = `${spots.length} spot${spots.length === 1 ? "" : "s"} within 1 km · sorted by ${sortLabel(mode)}`;
+  resultsCount.textContent = formatResultsSummary(spots, rateView);
   show(tableWrap);
   loadAllStreets(spots);
 }
@@ -245,7 +258,7 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string, mo
 function refreshResults() {
   const mode = sortSelect.value as SortMode;
   const sorted = sortMeters(cachedSpots, mode);
-  renderTable(sorted, cachedLocationText, mode);
+  renderTable(sorted, cachedLocationText);
 }
 
 function showToast(message: string) {
@@ -318,7 +331,7 @@ searchForm.addEventListener("submit", async (e) => {
       Number.isFinite(picked.lon);
     const { lat, lon, label } = hasCoords
       ? { lat: picked.lat, lon: picked.lon, label: picked.label }
-      : await geocodeAddress(picked?.label === query ? picked.label : query);
+      : await resolveSearchQuery(picked?.label === query ? picked.label : query);
     setLoading(false);
     await loadParking({ lat, lon }, label);
   } catch (err) {

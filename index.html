@@ -29,6 +29,7 @@
       <main class="main">
         <section id="search-section" class="search-section">
           <div class="rate-tabs" role="tablist" aria-label="Rate type">
+            <span class="rate-tabs__indicator" aria-hidden="true"></span>
             <button
               type="button"
               role="tab"
@@ -51,7 +52,7 @@
 
           <form id="search-form" class="search-form">
             <label class="search-form__label" for="address-input">
-              Address or intersection
+              Address, intersection or PayByPhone ID
             </label>
             <div class="search-form__row">
               <div class="search-form__input-wrap">
@@ -59,7 +60,7 @@
                   id="address-input"
                   class="search-form__input"
                   type="text"
-                  placeholder="e.g. Granville &amp; Robson"
+                  placeholder="&quot;Howe Nelson&quot; or &quot;50391&quot;"
                   autocomplete="off"
                   role="combobox"
                   aria-autocomplete="list"
@@ -83,25 +84,11 @@
             <span>or</span>
           </div>
 
-          <button type="button" class="btn btn--secondary btn--full" id="location-btn">
-            <svg
-              class="btn__icon"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
-              <path d="m4.93 4.93 1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-            </svg>
-            Share my location
-          </button>
+          <div class="location-btn-wrap">
+            <button type="button" class="btn btn--secondary" id="location-btn">
+              Use My Location
+            </button>
+          </div>
         </section>
 
         <section id="results-section" class="results-section hidden">

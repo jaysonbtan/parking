@@ -1,4 +1,4 @@
-import { searchAddressSuggestions } from "./api";
+import { isPayByPhoneQuery, searchAddressSuggestions } from "./api";
 import { matchLocalPlaces } from "./vancouver-places";
 import type { AddressSuggestion } from "./types";
 
@@ -107,8 +107,9 @@ export function initAddressAutocomplete(
     clearTimeout(debounceTimer);
     const query = input.value.trim();
 
-    if (query.length < 2) {
+    if (query.length < 2 || isPayByPhoneQuery(query) || /^\d+$/.test(query)) {
       close();
+      if (selected) selected = null;
       return;
     }
 

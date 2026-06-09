@@ -240,6 +240,42 @@ function normalizeCoords(origin: Coordinates): Coordinates {
   };
 }
 
+export function isPayByPhoneQuery(query: string): boolean {
+  return /^\d{4,7}$/.test(query.trim());
+}
+
+export async function lookupPayByPhoneId(
+  id: string
+): Promise<Coordinates & { label: string }> {
+  const number = id.trim();
+  const where = encodeURIComponent(
+    `mobile_payment_number = ${number} AND service_status = 'In Service'`
+  );
+  const url =
+    `${PARKING_API}?where=${where}` +
+    `&limit=1&select=mobile_payment_number,geo_point_2d`;
+
+  const page = await fetchParkingPage(url);
+  const meter = page.results[0];
+
+  if (!meter?.geo_point_2d) {
+    throw new Error(`No in-service parking meter found for PayByPhone ID ${number}.`);
+  }
+
+  const { lat, lon } = meter.geo_point_2d;
+  return { lat, lon, label: `PayByPhone ID ${number}` };
+}
+
+export async function resolveSearchQuery(
+  query: string
+): Promise<Coordinates & { label: string }> {
+  const trimmed = query.trim();
+  if (isPayByPhoneQuery(trimmed)) {
+    return lookupPayByPhoneId(trimmed);
+  }
+  return geocodeAddress(trimmed);
+}
+
 export async function geocodeAddress(query: string): Promise<Coordinates & { label: string }> {
   const suggestions = await searchAddressSuggestions(query);
   const withCoords = suggestions.find(hasValidCoords);

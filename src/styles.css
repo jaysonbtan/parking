@@ -22,6 +22,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -47,23 +48,39 @@ body {
 /* Header */
 
 .header {
-  background: linear-gradient(160deg, #0d6e6e 0%, #0a4f4f 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0px;
+  background-color: #0a1628;
+  background-image:
+    linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.8) 100%),
+    url("/parking/vancouver-header.png");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   color: #fff;
-  padding: 1.5rem 1.25rem 2rem;
+  padding: 16px 1.25rem 16px;
   text-align: center;
+  min-height: 11rem;
 }
 
 .header__title {
   margin: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  height: fit-content;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
 .header__subtitle {
-  margin: 0.35rem 0 0;
+  margin: 0.125rem 0 0;
   font-size: 0.95rem;
-  opacity: 0.88;
+  opacity: 0.92;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 /* Main */
@@ -71,12 +88,13 @@ body {
 .main {
   flex: 1;
   padding: 0 0 1.5rem;
-  margin-top: -1rem;
 }
 
 /* Search */
 
 .search-section {
+  display: flex;
+  flex-direction: column;
   background: var(--color-surface);
   border-radius: 0;
   box-shadow: var(--shadow);
@@ -85,15 +103,35 @@ body {
 }
 
 .rate-tabs {
+  position: relative;
   display: flex;
-  gap: 0.5rem;
   margin-bottom: 1.25rem;
   padding: 0.25rem;
   background: var(--color-bg);
   border-radius: 10px;
 }
 
+.rate-tabs__indicator {
+  position: absolute;
+  top: 0.25rem;
+  left: 0.25rem;
+  width: calc((100% - 0.5rem) / 2);
+  height: calc(100% - 0.5rem);
+  border-radius: 8px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px rgba(26, 35, 50, 0.08);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.rate-tabs--evening .rate-tabs__indicator {
+  transform: translateX(100%);
+}
+
 .rate-tabs__btn {
+  position: relative;
+  z-index: 1;
   flex: 1;
   padding: 0.625rem 0.75rem;
   font: inherit;
@@ -104,14 +142,12 @@ body {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, font-weight 0.15s;
+  transition: color 0.2s, font-weight 0.2s;
 }
 
 .rate-tabs__btn--active {
   font-weight: 600;
-  background: var(--color-surface);
   color: var(--color-primary);
-  box-shadow: 0 1px 4px rgba(26, 35, 50, 0.08);
 }
 
 .search-form__label {
@@ -138,13 +174,18 @@ body {
   padding: 0.875rem 1rem;
   font: inherit;
   font-size: 1rem;
-  border: 1.5px solid var(--color-border);
+  border: 1.5px solid transparent;
   border-radius: 10px;
   background: var(--color-bg);
   color: var(--color-text);
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
 
+.search-form__input:hover {
+  border-color: var(--color-border);
+}
+
+.search-form__input:active,
 .search-form__input:focus {
   outline: none;
   border-color: var(--color-primary);
@@ -189,19 +230,15 @@ body {
 
 .search-form__divider {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 1.25rem 0;
+  justify-content: center;
+  margin: 0.75rem 0;
   color: var(--color-text-muted);
   font-size: 0.875rem;
 }
 
-.search-form__divider::before,
-.search-form__divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--color-border);
+.location-btn-wrap {
+  display: flex;
+  justify-content: center;
 }
 
 /* Buttons */
@@ -258,8 +295,21 @@ body {
   width: 100%;
 }
 
-.btn__icon {
-  flex-shrink: 0;
+#location-btn {
+  width: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+  border: none;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  transition: background 0.15s;
+}
+
+#location-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+#location-btn:active:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 26%, transparent);
 }
 
 /* Results */
@@ -273,6 +323,9 @@ body {
 }
 
 .results-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 0 1rem 0.75rem;
 }
 
@@ -411,6 +464,10 @@ body {
   white-space: nowrap;
 }
 
+#rate-header {
+  text-align: right;
+}
+
 .results-table th:last-child {
   text-align: right;
 }
@@ -428,6 +485,7 @@ body {
 
 .results-table__rates {
   max-width: 0;
+  text-align: right;
 }
 
 .results-table__actions {
@@ -522,7 +580,8 @@ body {
 }
 
 .street-label--loading {
-  color: var(--color-border);
+  color: var(--color-text-muted);
+  opacity: 0.4;
 }
 
 .icon-btn {
@@ -596,6 +655,13 @@ body {
 /* Tablet+ */
 
 @media (min-width: 480px) {
+  .header::after {
+    content: "";
+    display: block;
+    flex-shrink: 0;
+    height: 16px;
+  }
+
   .header__title {
     font-size: 1.75rem;
   }
@@ -616,6 +682,7 @@ body {
 
   .main {
     max-width: 640px;
+    margin-top: -1rem;
     margin-left: auto;
     margin-right: auto;
     width: 100%;

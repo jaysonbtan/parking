@@ -77,8 +77,8 @@ export function sortMeters(
 }
 
 export function formatDistance(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters)} m`;
-  return `${(meters / 1000).toFixed(1)} km`;
+  if (meters < 1000) return `${Math.round(meters)}m`;
+  return `${(meters / 1000).toFixed(1)}km`;
 }
 
 export interface AccuratePosition extends Coordinates {
@@ -170,5 +170,34 @@ export function averageRates(spots: ParkingMeter[]): { day: number; night: numbe
   return {
     day: dayRates.length ? dayRates.reduce((sum, r) => sum + r, 0) / dayRates.length : 0,
     night: nightRates.length ? nightRates.reduce((sum, r) => sum + r, 0) / nightRates.length : 0,
+  };
+}
+
+export function formatRateAmount(amount: number): string {
+  return `$${amount.toFixed(2)}`;
+}
+
+export function rateSummary(
+  spots: ParkingMeter[],
+  view: RateView
+): { min: number; max: number; avg: number } | null {
+  const values: number[] = [];
+
+  for (const spot of spots) {
+    if (view === "day" || view === "all") {
+      values.push(parseRate(spot.rate_9am_6pm));
+    }
+    if (view === "evening" || view === "all") {
+      values.push(parseRate(spot.rate_6pm_10pm));
+    }
+  }
+
+  const finite = finiteRates(values);
+  if (finite.length === 0) return null;
+
+  return {
+    min: Math.min(...finite),
+    max: Math.max(...finite),
+    avg: finite.reduce((sum, rate) => sum + rate, 0) / finite.length,
   };
 }
