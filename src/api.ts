@@ -229,19 +229,94 @@ export async function searchAddressSuggestions(
   return mergeSuggestions(local, remote);
 }
 
+function hasValidCoords(suggestion: AddressSuggestion): boolean {
+  return Number.isFinite(suggestion.lat) && Number.isFinite(suggestion.lon);
+}
+
+function normalizeCoords(origin: Coordinates): Coordinates {
+  return {
+    lat: Number(origin.lat.toFixed(6)),
+    lon: Number(origin.lon.toFixed(6)),
+  };
+}
+
 export async function geocodeAddress(query: string): Promise<Coordinates & { label: string }> {
   const suggestions = await searchAddressSuggestions(query);
-  if (suggestions[0]) {
-    return suggestions[0];
+  const withCoords = suggestions.find(hasValidCoords);
+  if (withCoords) return withCoords;
+
+  try {
+    const nominatim = await searchNominatimWithVariants(query);
+    const resolved = nominatim.find(hasValidCoords);
+    if (resolved) return resolved;
+  } catch {
+    // Fall through to not-found error below
+  }
+
+  if (suggestions.length > 0) {
+    throw new Error(
+      "Could not find map coordinates for that location. Try a nearby street address."
+    );
   }
 
   throw new Error("No results found in Vancouver. Try an intersection or street address.");
 }
 
+const PARKING_FETCH_RETRIES = 3;
+const PARKING_RETRY_DELAY_MS = 800;
+
+function parkingFetchError(status: number): Error {
+  if (status === 0) {
+    return new Error(
+      "Could not reach the City of Vancouver parking database. Check your connection and try again."
+    );
+  }
+  if (status === 429) {
+    return new Error("Parking data is temporarily busy. Please wait a moment and try again.");
+  }
+  return new Error("Failed to load parking data from the City of Vancouver. Please try again.");
+}
+
+async function fetchParkingPage(url: string): Promise<ApiRecordsResponse> {
+  let lastStatus = 0;
+
+  for (let attempt = 0; attempt < PARKING_FETCH_RETRIES; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return res.json();
+
+      lastStatus = res.status;
+      if (res.status >= 500 || res.status === 429) {
+        await new Promise((r) => setTimeout(r, PARKING_RETRY_DELAY_MS * (attempt + 1)));
+        continue;
+      }
+
+      throw parkingFetchError(res.status);
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith("Failed to load parking")) throw err;
+      if (err instanceof Error && err.message.startsWith("Could not reach")) throw err;
+      if (err instanceof Error && err.message.startsWith("Parking data is temporarily")) throw err;
+
+      lastStatus = 0;
+      if (attempt < PARKING_FETCH_RETRIES - 1) {
+        await new Promise((r) => setTimeout(r, PARKING_RETRY_DELAY_MS * (attempt + 1)));
+        continue;
+      }
+    }
+  }
+
+  throw parkingFetchError(lastStatus);
+}
+
 export async function fetchParkingNear(
   origin: Coordinates
 ): Promise<ApiRecordsResponse["results"]> {
-  const point = `POINT(${origin.lon} ${origin.lat})`;
+  if (!Number.isFinite(origin.lat) || !Number.isFinite(origin.lon)) {
+    throw new Error("Could not determine map coordinates for this location.");
+  }
+
+  const { lat, lon } = normalizeCoords(origin);
+  const point = `POINT(${lon} ${lat})`;
   const where = encodeURIComponent(
     `within_distance(geo_point_2d, geom'${point}', ${RADIUS_KM}km) AND service_status = 'In Service'`
   );
@@ -256,13 +331,8 @@ export async function fetchParkingNear(
       `&limit=${PAGE_SIZE}&offset=${offset}` +
       `&select=service_status,mobile_payment_number,rate_9am_6pm,rate_6pm_10pm,geo_point_2d`;
 
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error("Failed to load parking data from the City of Vancouver.");
-    }
-
-    const page: ApiRecordsResponse = await res.json();
-    total = page.total_count;
+    const page = await fetchParkingPage(url);
+    total = page.total_count ?? 0;
     all.push(...page.results);
     offset += PAGE_SIZE;
 
