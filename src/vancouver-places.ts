@@ -1,0 +1,101 @@
+const VANCOUVER_PLACES = [
+  "Granville & Robson",
+  "Granville & Hastings",
+  "Granville & Georgia",
+  "Granville & Smithe",
+  "Granville & Nelson",
+  "Granville & Helmcken",
+  "Granville & Davie",
+  "Granville & Drake",
+  "Granville & Pacific",
+  "Granville & Broadway",
+  "Granville & 12th Ave",
+  "Robson & Granville",
+  "Robson & Burrard",
+  "Robson & Howe",
+  "Robson & Hornby",
+  "Hastings & Granville",
+  "Hastings & Abbott",
+  "Hastings & Carrall",
+  "Georgia & Granville",
+  "Georgia & Burrard",
+  "Georgia & Howe",
+  "Georgia & Hornby",
+  "Burrard & Robson",
+  "Burrard & Davie",
+  "Burrard & Nelson",
+  "Burrard & Smithe",
+  "Burrard & Drake",
+  "Burrard & Pacific",
+  "Howe & Robson",
+  "Howe & Davie",
+  "Howe & Georgia",
+  "Hornby & Robson",
+  "Hornby & Smithe",
+  "Hornby & Nelson",
+  "Hornby & Drake",
+  "Davie & Burrard",
+  "Davie & Howe",
+  "Davie & Hornby",
+  "Davie & Granville",
+  "Yaletown Roundhouse",
+  "Main & Hastings",
+  "Main & Terminal",
+  "Main & Broadway",
+  "Commercial & Broadway",
+  "Commercial & 12th Ave",
+  "Cambie & Broadway",
+  "Cambie & King Edward",
+  "Oak & Broadway",
+  "Arbutus & Broadway",
+  "West 4th & Burrard",
+  "West 4th & Macdonald",
+  "West Broadway & Alma",
+  "Kitsilano Beach",
+  "English Bay",
+  "Stanley Park",
+  "Canada Place",
+  "BC Place",
+  "Pacific Centre",
+  "Vancouver Art Gallery",
+  "Library Square",
+  "Gastown",
+  "Chinatown",
+  "Yaletown",
+  "West End",
+  "Kitsilano",
+  "Mount Pleasant",
+  "Fairview",
+  "Strathcona",
+  "South Granville",
+  "South Main",
+  "West Hastings Street",
+  "West Georgia Street",
+  "West Broadway",
+  "West 4th Avenue",
+  "West 10th Avenue",
+  "East Hastings Street",
+  "East Broadway",
+  "Kingsway",
+  "Marine Drive",
+  "SW Marine Drive",
+  "University Boulevard",
+  "UBC",
+];
+
+function normalize(text: string): string {
+  return text.toLowerCase().replace(/&/g, " ").replace(/,/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function matchesPlace(place: string, query: string): boolean {
+  const normalizedPlace = normalize(place);
+  const tokens = normalize(query).split(" ").filter(Boolean);
+  return tokens.every((token) => normalizedPlace.includes(token));
+}
+
+export function matchLocalPlaces(query: string, limit = 6): string[] {
+  const trimmed = query.trim();
+  if (trimmed.length < 2) return [];
+
+  return VANCOUVER_PLACES.filter((place) => matchesPlace(place, trimmed)).slice(0, limit);
+}

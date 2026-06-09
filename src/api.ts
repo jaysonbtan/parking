@@ -143,7 +143,7 @@ async function searchNominatimSuggestions(
 }
 
 function localPlaceSuggestions(query: string): AddressSuggestion[] {
-  return matchLocalPlaces(query).map((label) => ({
+  return matchLocalPlaces(query).map((label: string) => ({
     label,
     lat: NaN,
     lon: NaN,
