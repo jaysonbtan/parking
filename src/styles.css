@@ -441,7 +441,8 @@ body {
 .results-table {
   width: 100%;
   table-layout: fixed;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.875rem;
 }
 
@@ -464,12 +465,7 @@ body {
 }
 
 .results-table th {
-  background-color: var(--color-bg);
-  background-image: linear-gradient(
-    to bottom,
-    transparent calc(100% - 1px),
-    var(--color-border) calc(100% - 1px)
-  );
+  background: var(--color-bg);
   color: var(--color-text-muted);
   font-weight: 600;
   font-size: 0.75rem;
@@ -477,7 +473,7 @@ body {
   letter-spacing: 0.04em;
   padding: 0.625rem 0.75rem;
   text-align: left;
-  border-bottom: none;
+  border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
 }
 
@@ -491,21 +487,42 @@ body {
 
 .results-table td {
   padding: 0.75rem;
-  border-bottom: none;
   vertical-align: middle;
   overflow: hidden;
 }
 
-.results-table tbody tr:not(:last-child) {
-  background-image: linear-gradient(
-    to bottom,
-    transparent calc(100% - 1px),
-    var(--color-border) calc(100% - 1px)
-  );
+.results-table tbody tr:not(:last-child) td {
+  border-bottom: 1px solid var(--color-border);
+}
+
+@supports (-webkit-touch-callout: none) {
+  .results-table th,
+  .results-table tbody tr:not(:last-child) td {
+    border-bottom-width: 0.5px;
+  }
 }
 
 .results-table__pay {
   max-width: 0;
+}
+
+.pay-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.meter-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.pay-cell__content {
+  min-width: 0;
+  flex: 1;
 }
 
 .results-table__rates {
@@ -573,7 +590,17 @@ body {
 }
 
 .street-label {
+  display: block;
+  margin-top: 0.15rem;
+  min-width: 0;
   max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.3;
 }
 
 .results-table__rate-day {

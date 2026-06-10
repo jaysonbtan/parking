@@ -12,6 +12,7 @@ export interface AddressSuggestion {
 export interface ParkingMeter {
   service_status: string;
   mobile_payment_number: number;
+  meter_head: string | null;
   rate_9am_6pm: string;
   rate_6pm_10pm: string;
   sector: number;

@@ -298,6 +298,12 @@ export async function geocodeAddress(query: string): Promise<Coordinates & { lab
   throw new Error("No results found in Vancouver. Try an intersection or street address.");
 }
 
+const EXCLUDED_SERVICE_STATUSES = new Set(["Out of Service", "Removed"]);
+
+function isDisplayableMeter(meter: ApiRecordsResponse["results"][number]): boolean {
+  return !EXCLUDED_SERVICE_STATUSES.has(meter.service_status);
+}
+
 const PARKING_FETCH_RETRIES = 3;
 const PARKING_RETRY_DELAY_MS = 800;
 
@@ -365,15 +371,15 @@ export async function fetchParkingNear(
     const url =
       `${PARKING_API}?where=${where}` +
       `&limit=${PAGE_SIZE}&offset=${offset}` +
-      `&select=service_status,mobile_payment_number,rate_9am_6pm,rate_6pm_10pm,geo_point_2d`;
+      `&select=service_status,mobile_payment_number,meter_head,rate_9am_6pm,rate_6pm_10pm,geo_point_2d`;
 
     const page = await fetchParkingPage(url);
     total = page.total_count ?? 0;
-    all.push(...page.results);
+    all.push(...page.results.filter(isDisplayableMeter));
     offset += PAGE_SIZE;
 
     if (page.results.length === 0) break;
   }
 
-  return all;
+  return all.filter(isDisplayableMeter);
 }

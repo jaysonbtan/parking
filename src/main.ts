@@ -115,6 +115,23 @@ function coordKey(lat: number, lon: number): string {
   return `${lat},${lon}`;
 }
 
+const METER_ICON_SRC = "/parking/meter-icon.png";
+const ZONE_ICON_SRC = "/parking/zone-icon.png";
+
+function meterIconSrc(meterHead: string | null | undefined): string | null {
+  const type = meterHead?.trim().toLowerCase() ?? "";
+  if (type === "single" || type === "twin" || type === "dual") return METER_ICON_SRC;
+  if (type === "pay station" || type === "zone only" || type === "zone") return ZONE_ICON_SRC;
+  return null;
+}
+
+function renderMeterIconHtml(meterHead: string | null | undefined): string {
+  const src = meterIconSrc(meterHead);
+  if (!src) return "";
+  const label = src === METER_ICON_SRC ? "Parking meter" : "Parking zone";
+  return `<img class="meter-icon" src="${src}" width="32" height="32" alt="" aria-label="${label}" />`;
+}
+
 function applyStreetLabel(key: string, street: string) {
   resultsBody.querySelectorAll<HTMLElement>(`.street-label[data-coord-key="${key}"]`).forEach((el) => {
     el.textContent = street;
@@ -234,22 +251,27 @@ function renderTable(spots: ParkingMeterWithDistance[], locationText: string) {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td class="results-table__pay">
-        <button
-          type="button"
-          class="copy-group"
-          aria-label="Copy PayByPhone ID ${spot.mobile_payment_number}"
-          data-code="${spot.mobile_payment_number}"
-        >
-          <span class="copy-group__code">${spot.mobile_payment_number}</span>
-          <span class="copy-group__icon">${COPY_ICON}</span>
-        </button>
-        <span
-          class="results-table__sub street-label${cachedStreet ? "" : " street-label--loading"}"
-          data-coord-key="${key}"
-          x-apple-data-detectors="false"
-          translate="no"
-          ${cachedStreet ? `title="${cachedStreet}"` : ""}
-        >${cachedStreet ?? LOADING_STREET_LABEL}</span>
+        <div class="pay-cell">
+          ${renderMeterIconHtml(spot.meter_head)}
+          <div class="pay-cell__content">
+            <button
+              type="button"
+              class="copy-group"
+              aria-label="Copy PayByPhone ID ${spot.mobile_payment_number}"
+              data-code="${spot.mobile_payment_number}"
+            >
+              <span class="copy-group__code">${spot.mobile_payment_number}</span>
+              <span class="copy-group__icon">${COPY_ICON}</span>
+            </button>
+            <span
+              class="street-label${cachedStreet ? "" : " street-label--loading"}"
+              data-coord-key="${key}"
+              x-apple-data-detectors="false"
+              translate="no"
+              title="${cachedStreet ?? LOADING_STREET_LABEL}"
+            >${cachedStreet ?? LOADING_STREET_LABEL}</span>
+          </div>
+        </div>
       </td>
       <td class="results-table__rates">
         ${renderRateCell(spot, avgDay, avgNight, rateView)}
